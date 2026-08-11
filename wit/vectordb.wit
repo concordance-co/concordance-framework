@@ -1,0 +1,125 @@
+package plugin:injector;
+
+/// Interface for interacting with vector databases to store and retrieve embeddings
+/// for semantic search and similarity comparison
+interface vector-db {
+    use error.{plugin-error};
+    use open-a-i-like.{client};
+
+    /// Represents a chunk of text with a unique identifier
+    record text-chunk {
+        /// Unique identifier for the text chunk
+        id: string,
+        /// The text content of the chunk
+        text: string,
+    }
+
+    /// Configuration for embedding generation
+    record embedding-config {
+        /// The client used to generate embeddings
+        embedding-client: client,
+        /// The name of the embedding model to use
+        model-name: string
+    }
+
+    /// Configuration options for similarity search operations
+    record similarity-search-config {
+        /// List of field names to return in the search results
+        fields-returned: list<string>,
+        /// Maximum number of results to return (optional)
+        limit: option<u32>,
+        /// Whether to include embedding vectors in the results (optional)
+        include-embeddings: option<bool>,
+        /// Similarity threshold - only return results with similarity score above this value (optional)
+        threshold: option<f64>,
+        /// Additional filtering condition expressed as a SQL WHERE clause (optional)
+        where-clause: option<string>,
+    }
+
+    /// Response format for similarity search results
+    record similarity-response {
+        /// 2D array of column values for each matching row
+        columns: list<list<string>>,
+        /// Names of the columns returned
+        column-names: list<string>,
+        /// Distance/similarity scores for each matched item (lower is more similar)
+        distances: list<f64>,
+    }
+
+    /// Resource representing a connection to a vector database
+    resource db-connection {
+        /// Creates a new table in the vector database
+        ///
+        /// # Parameters
+        /// * `table-name`: Name of the table to create
+        /// * `schema-json-str`: JSON string describing the table schema
+        create-table: func(table-name: string, schema-json-str: string) -> result<bool, plugin-error>;
+
+        /// Retrieves all table names in the database
+        get-table-names: func() -> result<list<string>, plugin-error>;
+
+        /// Retrieves the schema of a table as a JSON string
+        ///
+        /// # Parameters
+        /// * `table-name`: Name of the table to get the schema for
+        get-table-schema-json-str: func(table-name: string) -> result<string, plugin-error>;
+
+        /// Adds data to a table, generating embeddings for the specified column
+        ///
+        /// # Parameters
+        /// * `table-name`: Name of the target table
+        /// * `embedding-client`: Client to use for generating embeddings
+        /// * `embedding-model-name`: Name of the embedding model to use
+        /// * `json-str-columns`: List of JSON strings, each representing a column of data
+        /// * `to-embed-column-index`: Index of the column to generate embeddings for
+        /// * `upsert-on`: Optional column name to use for upsert operations
+        add: func(
+            table-name: string,
+            embedding-client: client,
+            embedding-model-name: string,
+            json-str-columns: list<string>,
+            to-embed-column-index: u32,
+            upsert-on: option<string>,
+        ) -> result<bool, plugin-error>;
+
+        /// Deletes data from a table
+        ///
+        /// # Parameters
+        /// * `table-name`: Name of the target table
+        /// * `predicate`: The SQL predicate string to filter the rows to be deleted.
+        delete: func(
+            table-name: string,
+            predicate: string
+        ) -> result<bool, plugin-error>;
+
+        /// Retrieves a specific row by its ID
+        ///
+        /// # Parameters
+        /// * `table-name`: Name of the table to query
+        /// * `id-column`: Name of the column containing IDs
+        /// * `id-value`: ID value to look for
+        /// * `fields-returned`: List of field names to include in the result
+        get-row-by-id: func(
+            table-name: string,
+            id-column: string,
+            id-value: string,
+            fields-returned: list<string>,
+        ) -> result<option<string>, plugin-error>;
+
+        /// Performs a similarity search on the vector database
+        ///
+        /// # Parameters
+        /// * `config`: Configuration for the similarity search
+        /// * `embedding-client`: Client to use for generating query embeddings
+        /// * `model-name`: Name of the embedding model to use
+        /// * `table-name`: Name of the table to search
+        /// * `input`: Text input to find similar entries for
+        similarity-search: func(
+            config: similarity-search-config,
+            embedding-client: borrow<client>,
+            model-name: string,
+            table-name: string,
+            input: string
+        ) -> result<list<similarity-response>, plugin-error>;
+    }
+}

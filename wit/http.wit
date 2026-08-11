@@ -1,0 +1,32 @@
+package plugin:injector;
+
+/// Interface for HTTP operations provided by the host.
+///
+/// This interface allows plugins to make HTTP requests to external services
+/// and receive responses.
+interface http {
+    use error.{plugin-error};
+
+    /// Represents an HTTP request to be sent.
+    ///
+    /// Contains all necessary information to make an HTTP request including
+    /// the URL, headers, and body content.
+    record http-request {
+        /// The full URL to send the request to.
+        url: string,
+        /// List of HTTP headers as key-value pairs.
+        headers: list<tuple<string, string>>,
+        /// The request body as a byte array.
+        body: list<u8>
+    }
+
+    /// Represents an HTTP response received.
+    ///
+    /// Contains the response status code and body content.
+    record http-response {
+        /// HTTP status code (e.g., 200 for OK, 404 for Not Found).
+        status: u16,
+        /// The response body as a byte array.
+        body: list<u8>
+    }
+}

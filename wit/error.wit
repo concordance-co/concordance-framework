@@ -1,0 +1,72 @@
+/// Error handling interface for plugins
+package plugin:injector;
+
+interface error {
+    /// Errors related to prompt handling
+    enum prompt-error {
+        /// Input provided is invalid or malformed
+        invalid-input
+    }
+
+    /// HTTP-related errors encountered during network operations
+    variant http-error {
+        /// Network connectivity error
+        network,
+        /// Request timed out
+        timeout,
+        /// URL provided is invalid or malformed
+        invalid-url,
+        /// Request could not be constructed properly
+        invalid-request,
+        /// Response received was invalid or could not be parsed
+        invalid-response,
+        /// HTTP status indicates an error, with message
+        bad-status(string)
+    }
+
+    /// File system related errors
+    variant fs-error {
+        /// File or directory not found
+        not-found,
+        /// Insufficient permissions to access file or directory
+        permission-denied,
+        /// Other file system errors with message
+        other(string)
+    }
+
+    /// Comprehensive error type for all plugin operations
+    variant plugin-error {
+        /// HTTP request related errors
+        http(http-error),
+        /// Resource management errors
+        resource-error(string),
+        /// Errors during embedding generation
+        embedding-error(string),
+        /// JSON parsing or serialization errors
+        json(string),
+        /// Unexpected or uncategorized errors
+        unexpected(string),
+        /// File system errors
+        fs(fs-error),
+        /// Prompt handling errors
+        prompt(prompt-error),
+        /// Markdown conversion errors
+        md-error(string),
+        /// Feature or capability disabled in host
+        host-disabled(string),
+        /// Vector database errors
+        vector-db(string),
+        /// Chat completion API errors
+        chat-completion(string),
+        /// Pipeline execution errors
+        pipeline(string),
+        /// Knowledge graph database errors
+        kg-db(string),
+        /// Environment variable error
+        env-var(string),
+        /// Errors when calling other plugins
+        plugin-call(string),
+        /// A generic error
+        generic(string),
+    }
+}

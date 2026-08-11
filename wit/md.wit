@@ -1,0 +1,22 @@
+package plugin:injector;
+
+/// Interface for converting various document formats to markdown.
+/// This provides a unified way for plugins to handle different file types.
+interface markdown-converter {
+    use error.{plugin-error};
+
+    /// Represents different file types that can be converted to markdown.
+    /// Each variant contains the raw bytes of the file.
+    variant file-type {
+        /// PDF document bytes
+        pdf(list<u8>),
+        /// PowerPoint presentation bytes
+        ppt(list<u8>),
+        /// Word document bytes
+        docx(list<u8>),
+        /// Excel spreadsheet bytes
+        xlsx(list<u8>),
+        /// HTML document bytes
+        html(list<u8>),
+    }
+}

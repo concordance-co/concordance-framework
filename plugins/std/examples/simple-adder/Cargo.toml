@@ -1,0 +1,23 @@
+[package]
+name = "simple-adder"
+edition.workspace = true
+version.workspace = true
+authors.workspace = true
+description.workspace = true
+license.workspace = true
+# when stabilized: https://doc.rust-lang.org/cargo/reference/unstable.html#per-package-target
+# default-target = "wasm32-wasip2"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wit-bindgen.workspace = true
+serde_json.workspace = true
+serde.workspace = true
+schemars.workspace = true
+shared.workspace = true
+
+[package.metadata.component]
+target = "wasm32-wasip2"

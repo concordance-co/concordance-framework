@@ -1,0 +1,50 @@
+[workspace]
+members = [
+    "std/data/md-converter",
+    "std/data/md-chunker",
+    "std/data/json-manipulator",
+    "std/data/sandbox-fs",
+    "std/data/time",
+
+    "std/examples/simple-adder",
+    "std/examples/embedder",
+    "std/examples/monolithic-vectorizer",
+
+    "std/kg/entity-extraction",
+    "std/kg/neo4j-kg",
+    "std/kg/kg-ctx-retrieval",
+
+    "std/vector/doc-vector-store",
+    "std/vector/vec-ctx-retrieval",
+
+    "std/ext-connections/github",
+
+    "apps/ea-test",
+
+    "shared",
+    "std/ext-connections/slack",
+    "std/ext-connections/gcal",
+    "std/ext-connections/gmail", "std/slash/fetch", "apps/nb-one", "std/ext-connections/dropbox",
+]
+resolver = "2"
+
+[workspace.dependencies]
+chrono = { version = "0.4", features = ["serde"] }
+wit-bindgen = "0.41.0"
+serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
+serde = { version = "1.0", default-features = false, features = [
+    "alloc",
+    "derive",
+] }
+base64 = { version = "0.22.1", default-features = false, features = ["alloc"] }
+schemars = "1.0.0-alpha.17"
+shared = { path = "./shared" }
+uuid = { version = "1.6", features = ["v4"] }
+regex = "1.11.1"
+
+[workspace.package]
+edition = "2021"
+version = "0.1.0"
+authors = [""]
+description = "A workspace for agent capabilities"
+license = "MIT"

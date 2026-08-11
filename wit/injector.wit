@@ -1,0 +1,267 @@
+package plugin:injector;
+
+/// Interface that exposes functionality for plugins to implement.
+interface guest {
+    use error.{plugin-error};
+
+    /// Defines the type of plugin and how it processes data.
+    enum plugin-kind {
+        chat-app,
+        slash-command,
+        tool
+    }
+
+    /// Metadata describing a plugin and its capabilities.
+    record metadata {
+        /// Name of the plugin.
+        name: string,
+        /// Version string of the plugin (e.g. "1.0.0").
+        version: string,
+        /// Human-readable description of what the plugin does.
+        description: string,
+        /// Author or organization that created the plugin.
+        author: string,
+        /// Type of plugin (json-to-json or tool).
+        kind: plugin-kind,
+        /// A list of (input_name, env-var), designating that a particular
+        /// input, if not provided, will be added
+        env-var-support: list<tuple<string, string>>,
+        /// Default JSON input string for the plugin.
+        default-input: string,
+        /// JSON Schema defining the expected input format.
+        input-schema: string,
+        /// JSON Schema defining the expected output format.
+        output-schema: string
+    }
+
+    /// Returns plugin metadata information.
+    get-metadata: func() -> metadata;
+
+    /// Resource representing a JSON-to-JSON transformation plugin.
+    resource json-to-json {
+        /// Creates a new JSON-to-JSON plugin instance.
+        constructor();
+
+        /// Process the input JSON string and return a transformed JSON string.
+        ///
+        /// # Arguments
+        ///
+        /// * `input` - JSON string to be processed
+        ///
+        /// # Returns
+        ///
+        /// A Result containing either the transformed JSON string or a plugin error
+        work: func(input: string) -> result<string, plugin-error>;
+    }
+}
+
+/// Interface that exposes host functionality to plugins.
+interface host {
+    use http.{http-request, http-response};
+    use logger.{level};
+    use markdown-converter.{file-type};
+    use error.{plugin-error};
+    use vector-db.{db-connection, text-chunk};
+    use open-a-i-like.{open-a-i-config, client};
+
+    /// Represents metadata about a tool that can be used with LLM function calling.
+    ///
+    /// Contains the name and description of the tool. It does not contain the parameters.
+    record meta-tool-info {
+        /// The name of the tool
+        name: string,
+        /// The description of the tool
+        description: string
+    }
+
+    /// Represents a meta object that contains information about tools that can be used with LLM function calling.
+    ///
+    /// Contains a list of MetaToolInfo objects.
+    record meta-tools {
+        /// The list of tools that the LLM wants included in the function calling schemas
+        tools: list<meta-tool-info>,
+    }
+
+    /// Represents a request for tools to be used with LLM function calling.
+    ///
+    /// Contains a list of MetaToolInfo objects.
+    record tools-request {
+        /// The list of tools that the LLM wants included in the function calling schemas
+        tools-to-include-by-name: list<string>,
+    }
+
+    streaming-enabled: func() -> bool;
+
+    resource sse-event {
+        constructor();
+        set-event: func(event-name: string) -> result<bool, plugin-error>;
+        set-json: func(event-json: string) -> result<bool, plugin-error>;
+        set-data: func(event-data: string) -> result<bool, plugin-error>;
+        set-id: func(id: string) -> result<bool, plugin-error>;
+        send: func() -> result<bool, plugin-error>;
+    }
+
+    /// Updates the current status of a running plugin.
+    ///
+    /// # Arguments
+    ///
+    /// * `status` - Current status message
+    update-status: func(status: string);
+
+    /// Converts a plugin-relative path to a sandbox-safe absolute path.
+    ///
+    /// # Arguments
+    ///
+    /// * `file-path` - Relative path to convert
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(string)` - Absolute path within the plugin sandbox
+    /// * `Err(plugin-error)` - If conversion fails
+    to-sandbox-path: func(file-path: string) -> result<string, plugin-error>;
+
+    /// Calls another plugin with the given input.
+    ///
+    /// # Arguments
+    ///
+    /// * `plugin-name` - Name of the plugin to call
+    /// * `input` - JSON string to pass to the plugin
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(string)` - JSON string result from the called plugin
+    /// * `Err(plugin-error)` - If the plugin call fails
+    call-plugin: func(plugin-name: string, input: string) -> result<string, plugin-error>;
+
+    // http
+    /// Performs an HTTP GET request.
+    ///
+    /// # Arguments
+    ///
+    /// * `req` - HTTP request configuration
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(http-response)` - The HTTP response
+    /// * `Err(plugin-error)` - If the request fails
+    get: func(req: http-request) -> result<http-response, plugin-error>;
+
+    /// Performs an HTTP POST request.
+    ///
+    /// # Arguments
+    ///
+    /// * `req` - HTTP request configuration
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(http-response)` - The HTTP response
+    /// * `Err(plugin-error)` - If the request fails
+    post: func(req: http-request) -> result<http-response, plugin-error>;
+
+    // logging
+    /// Logs a message at the specified level.
+    ///
+    /// # Arguments
+    ///
+    /// * `level` - Logging level (debug, info, warn, error)
+    /// * `msg` - Message to log
+    log: func(level: level, msg: string);
+
+    // file->md convert
+    /// Converts a document file to Markdown format.
+    ///
+    /// # Arguments
+    ///
+    /// * `doc` - Document file to convert
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(string)` - Markdown string representation of the document
+    /// * `Err(plugin-error)` - If conversion fails
+    convert: func(doc: file-type) -> result<string, plugin-error>;
+
+    // openai
+    /// Creates a new OpenAI-compatible configuration.
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(open-a-i-config)` - New OpenAI configuration resource
+    /// * `Err(plugin-error)` - If creation fails
+    new-open-ai-config: func() -> result<open-a-i-config, plugin-error>;
+
+    /// Creates a new OpenAI-compatible client with the given configuration.
+    ///
+    /// # Arguments
+    ///
+    /// * `config` - OpenAI configuration to use
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(client)` - New OpenAI client resource
+    /// * `Err(plugin-error)` - If client creation fails
+    new-open-ai-client-with-config: func(config: borrow<open-a-i-config>) -> result<client, plugin-error>;
+
+    /// Creates a new OpenAI-compatible client with the given base URL and API key.
+    ///
+    /// # Arguments
+    ///
+    /// * `base-url` - API base URL
+    /// * `api-key` - API key for authentication
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(client)` - New OpenAI client resource
+    /// * `Err(plugin-error)` - If client creation fails
+    new-client: func(
+        base-url: string,
+        api-key: string
+    ) -> result<client, plugin-error>;
+
+    // vector-db
+    /// Connects to a vector database at the specified URI.
+    ///
+    /// # Arguments
+    ///
+    /// * `uri` - Connection string or path to the database
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(db-connection)` - Database connection resource
+    /// * `Err(plugin-error)` - If connection fails
+    connect-db: func(
+        uri: string,
+    ) -> result<db-connection, plugin-error>;
+
+    /// Returns a json-string of all mcp compatible tools available
+    mcp-tools: func() -> result<string, plugin-error>;
+
+    /// Returns a json-string of the specified mcp compatible tools
+    mcp-tool-request: func(req: tools-request) -> result<string, plugin-error>;
+
+    /// Returns a json-string of a tool that just has the description of the tools
+    ///
+    /// This reduces the context and complexity of LLM prompts
+    mcp-meta-tools: func() -> result<meta-tools, plugin-error>;
+}
+
+/// World definition for the plugin injector.
+world injector {
+  import http;
+  import logger;
+  import markdown-converter;
+  import vector-db;
+  import open-a-i-like;
+  import host;
+  import env;
+
+  export guest;
+}
+
+world host-types {
+    import http;
+    import logger;
+    import markdown-converter;
+    import vector-db;
+    import open-a-i-like;
+    import env;
+}

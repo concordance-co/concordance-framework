@@ -1,0 +1,16 @@
+package plugin:injector;
+
+/// Interface for managing logging operations within plugins
+interface logger {
+    /// Log level enumeration for controlling the severity of log messages
+    enum level {
+        /// Debug-level messages for detailed diagnostic information
+        debug,
+        /// Informational messages about normal application operation
+        info,
+        /// Warning messages for potential issues that aren't errors
+        warn,
+        /// Error messages for issues that need immediate attention
+        error
+    }
+}

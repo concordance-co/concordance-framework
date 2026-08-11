@@ -1,0 +1,85 @@
+Entity_types: [person, technology, mission, organization, location]
+    Text:
+while Alex clenched his jaw, the buzz of frustration dull against the backdrop of Taylor's authoritarian certainty. It was this competitive undercurrent that kept him alert, the sense that his and Jordan's shared commitment to discovery was an unspoken rebellion against Cruz's narrowing vision of control and order.
+
+Then Taylor did something unexpected. They paused beside Jordan and, for a moment, observed the device with something akin to reverence. "If this tech can be understood..." Taylor said, their voice quieter, "It could change the game for us. For all of us."
+
+The underlying dismissal earlier seemed to falter, replaced by a glimpse of reluctant respect for the gravity of what lay in their hands. Jordan looked up, and for a fleeting heartbeat, their eyes locked with Taylor's, a wordless clash of wills softening into an uneasy truce.
+
+It was a small transformation, barely perceptible, but one that Alex noted with an inward nod. They had all been brought here by different paths
+    ################
+    Output:
+    ```json
+    {
+    	"entityExtraction": {
+    		"entities": [
+    			{
+    				"name": "Alex",
+    				"type": "person",
+    				"description": "Alex is a character who experiences frustration and is observant of the dynamics among other characters."
+    			},
+    			{
+    				"name": "Taylor",
+    				"type": "person",
+    				"description": "Taylor is portrayed with authoritarian certainty and shows a moment of reverence towards a device, indicating a change in perspective."
+    			},
+    			{
+    				"name": "Jordan",
+    				"type": "person",
+    				"description": "Jordan shares a commitment to discovery and has a significant interaction with Taylor regarding a device."
+    			},
+    			{
+    				"name": "Cruz",
+    				"type": "person",
+    				"description": "Cruz is associated with a vision of control and order, influencing the dynamics among other characters."
+    			},
+    			{
+    				"name": "The Device",
+    				"type": "technology",
+    				"description": "The Device is central to the story, with potential game-changing implications, and is revered by Taylor."
+    			}
+    		],
+    		"relationships": [
+    			{
+    				"source": "Alex",
+    				"target": "Taylor",
+    				"description": "Alex is affected by Taylor's authoritarian certainty and observes changes in Taylor's attitude towards the device.",
+    				"keywords": "power dynamics, perspective shift",
+    				"strength": 7
+    			},
+    			{
+    				"source": "Alex",
+    				"target": "Jordan",
+    				"description": "Alex and Jordan share a commitment to discovery, which contrasts with Cruz's vision.",
+    				"keywords": "shared goals, rebellion",
+    				"strength": 6
+    			},
+    			{
+    				"source": "Taylor",
+    				"target": "Jordan",
+    				"description": "Taylor and Jordan interact directly regarding the device, leading to a moment of mutual respect and an uneasy truce.",
+    				"keywords": "conflict resolution, mutual respect",
+    				"strength": 8
+    			},
+    			{
+    				"source": "Jordan",
+    				"target": "Cruz",
+    				"description": "Jordan's commitment to discovery is in rebellion against Cruz's vision of control and order.",
+    				"keywords": "ideological conflict, rebellion",
+    				"strength": 5
+    			},
+    			{
+    				"source": "Taylor",
+    				"target": "The Device",
+    				"description": "Taylor shows reverence towards the device, indicating its importance and potential impact.",
+    				"keywords": "reverence, technological significance",
+    				"strength": 9
+    			}
+    		],
+    		"contentKeywords": {
+    			"highLevelKeywords": "power dynamics, ideological conflict, discovery, rebellion"
+    		}
+    	}
+    }
+    ```
+    #############################

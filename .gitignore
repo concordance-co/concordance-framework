@@ -1,0 +1,26 @@
+# Build artifacts
+target/
+
+# Editor and operating-system metadata
+.DS_Store
+.metadata_never_index
+.claude/
+.idea/
+.vscode/
+.zed/
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+
+# Local application data
+**/neo4j-kg/db/
+*.db
+*.sqlite*
+*.log

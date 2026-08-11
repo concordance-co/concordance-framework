@@ -1,0 +1,371 @@
+package plugin:injector;
+
+/// Interface to interact with OpenAI-like APIs, providing capabilities for chat completions
+/// and embedding generation.
+interface open-a-i-like {
+    use error.{plugin-error};
+
+    /// Configuration resource for OpenAI and compatible APIs.
+    resource open-a-i-config {
+        /// Sets the organization ID for the API client.
+        ///
+        /// Some API providers use organization IDs to distinguish between different
+        /// teams or projects within the same account.
+        with-org-id: func(org-id: string) -> open-a-i-config;
+
+        /// Sets the project ID for the API client.
+        ///
+        /// Used by some providers (like Anthropic) to specify which project
+        /// should be billed for API usage.
+        with-project-id: func(project-id: string) -> open-a-i-config;
+
+        /// Sets the API key for authentication.
+        ///
+        /// Required for accessing most AI service APIs.
+        with-api-key: func(api-key: string) -> open-a-i-config;
+
+        /// Sets the base URL for the API.
+        ///
+        /// Allows using different endpoints or self-hosted models.
+        with-api-base: func(api-base: string) -> open-a-i-config;
+    }
+
+    /// Represents a typed message content with a specific type and text.
+    ///
+    /// Used for representing specific content types like "text", "image_url", etc.
+    record typed-message-content {
+        /// The content type identifier (e.g., "text", "image_url")
+        content-type: string,
+        /// The actual text content
+        text: string,
+    }
+
+    /// Represents different forms of message content.
+    variant message-content {
+        /// Structured message with type information
+        parts(typed-message-content),
+        /// Simple text content
+        content(string),
+    }
+
+    /// Represents how content is organized within a message.
+    variant content-type {
+        /// Multiple content pieces (e.g., text + images)
+        array(list<message-content>),
+        /// Single content piece
+        single(message-content)
+    }
+
+    /// A message in a conversation, with a role and content.
+    record message {
+        /// The role of the message sender (e.g., "system", "user", "assistant")
+        role: string,
+        /// The content of the message
+        content: content-type,
+        /// For chat history, the llm provider may need the information from the tool call
+        tool-calls: option<list<tool-call-usage>>,
+        /// If the role was a tool, we have to include the tool call id
+        tool-call-id: option<string>,
+    }
+
+    /// Configuration for tool selection by the LLM
+    variant tool-selection {
+        /// The model selects 0 or more tools to call
+        auto,
+        /// The model selects 1 or more tools to call
+        required,
+        /// The model must call the specified function of the given name
+        forced(string),
+    }
+
+    /// Configuration for a chat completion request.
+    record chat-config {
+        /// The model to use (e.g., "gpt-4", "claude-3")
+        model: string,
+        /// Controls diversity via nucleus sampling (0.0-1.0)
+        top-p: option<f64>,
+        /// Limits token consideration to top K possibilities
+        top-k: option<u32>,
+        /// Controls randomness (0.0-2.0)
+        temperature: option<f64>,
+        /// Maximum number of tokens to generate
+        max-tokens: option<u32>,
+        /// The conversation history
+        messages: list<message>,
+        /// Tools/functions the model can call
+        tools: option<list<string>>,
+        /// Tool choice selection
+        tool-choice: option<tool-selection>,
+        /// JSON schema for structured output
+        response-schema: option<string>,
+        /// Whether to enable streaming of output
+        streaming: option<bool>,
+    }
+
+    /// Log probability information for generated tokens.
+    record logprob {
+        /// Placeholder for future implementation
+        todo: string
+    }
+
+    /// Represents a URL citation in a generated response.
+    record url-citation {
+        /// End character index of the citation
+        end-index: u64,
+        /// Start character index of the citation
+        start-index: u64,
+        /// Title of the cited source
+        title: string,
+        /// URL of the cited source
+        url: string
+    }
+
+    /// An annotation in a model's response, such as a citation.
+    record annotation {
+        /// Type of annotation (e.g., "file_citation", "file_path")
+        annotation-type: string,
+        /// URL citation details
+        url-citation: url-citation
+    }
+
+    /// Details about a function used in a tool call.
+    record function-usage {
+        /// JSON string of function arguments
+        arguments: string,
+        /// Function name
+        name: string
+    }
+
+    /// A tool call made by the model.
+    record tool-call-usage {
+        /// Function details
+        function: function-usage,
+        /// Unique identifier for the tool call
+        id: string,
+        /// Type of tool call (usually "function")
+        tool-type: string,
+    }
+
+    /// A message response from the assistant.
+    record message-response {
+        /// Role of the message (usually "assistant")
+        role: string,
+        /// Text content of the response
+        content: option<string>,
+        /// Reason for refusal if the model declined to respond
+        refusal: option<string>,
+        /// Citations and other annotations
+        annotations: option<list<annotation>>,
+        /// Tool calls made in the response
+        tool-calls: option<list<tool-call-usage>>,
+    }
+
+    /// A completion choice returned by the model.
+    record choice {
+        /// Reason why generation stopped (e.g., "stop", "length")
+        finish-reason: string,
+        /// Index of this choice in the list of choices
+        index: u64,
+        /// Token-level log probabilities
+        logprobs: option<logprob>,
+        /// The generated message
+        message: message-response
+    }
+
+    /// Detailed token usage for completion.
+    record completion-token-details {
+        /// Tokens from accepted predictions
+        accepted-prediction-tokens: u64,
+        /// Tokens used in audio processing
+        audio-tokens: u64,
+        /// Tokens used in reasoning
+        reasoning-tokens: u64,
+        /// Tokens from rejected predictions
+        rejected-prediction-tokens: u64,
+    }
+
+    /// Detailed token usage for prompt.
+    record prompt-token-details {
+        /// Tokens used in audio processing
+        audio-tokens: u64,
+        /// Tokens retrieved from cache
+        cached-tokens: u64
+    }
+
+    /// Token usage statistics for the request.
+    record usage {
+        /// Tokens used in completion
+        completion-tokens: u64,
+        /// Tokens used in prompt
+        prompt-tokens: u64,
+        /// Total tokens used
+        total-tokens: u64,
+        /// Detailed completion token breakdown
+        completion-token-details: option<completion-token-details>,
+        /// Detailed prompt token breakdown
+        prompt-token-details: option<prompt-token-details>
+    }
+
+    /// The complete response from a chat completion request.
+    record chat-completion {
+        /// List of alternative completions
+        choices: list<choice>,
+        /// Unix timestamp of creation
+        created: u64,
+        /// Unique identifier for this completion
+        id: string,
+        /// The model used
+        model: string,
+        /// Object type (usually "chat.completion")
+        object: string,
+        /// Service tier used (provider-specific)
+        service-tier: option<string>,
+        /// Model's system fingerprint for reproducibility
+        system-fingerprint: option<string>,
+        /// Token usage statistics
+        usage: usage
+    }
+
+    /// Input formats for embedding generation.
+    variant embedding-input {
+        /// Single string input
+        str(string),
+        /// Array of strings to embed
+        str-array(list<string>),
+        /// Array of integers (token IDs)
+        integer-array(list<u32>),
+        /// Array of integer arrays (batched token IDs)
+        array-of-integer-array(list<list<u32>>),
+    }
+
+    /// Encoding format for embeddings.
+    enum encoding-format {
+        /// Standard floating-point encoding
+        float
+    }
+
+    /// Client resource for interacting with AI model APIs.
+    resource client {
+        /// Creates a chat completion from the provided configuration.
+        ///
+        /// Use this to generate text responses from the AI model.
+        chat-create: func(chat: chat-config) -> result<chat-completion, plugin-error>;
+
+        /// Gets the dimensionality of embeddings for a specific model.
+        ///
+        /// Different models produce embeddings with different dimensions.
+        get-embeddings-dimensions: func(model: string) -> result<u32, plugin-error>;
+
+        /// Creates embeddings with simplified parameters.
+        ///
+        /// Convenience method for common embedding generation cases.
+        embeddings-create-simple: func(
+            model: string,
+            input: embedding-input
+        ) -> result<list<list<f32>>, plugin-error>;
+
+        /// Creates embeddings with full parameter control.
+        ///
+        /// Provides access to all embedding generation options.
+        embeddings-create: func(
+            model: string,
+            input: embedding-input,
+            encoding-format: option<encoding-format>,
+            user: option<string>,
+            dimensions: option<u32>,
+        ) -> result<list<list<f32>>, plugin-error>;
+    }
+
+    /// Represents a conversation session with an AI model.
+    ///
+    /// Manages conversation history and provides methods for sending messages
+    /// and retrieving responses within a persistent context.
+    resource chat-session {
+        /// Creates a new chat session with the specified configuration and client.
+        ///
+        /// The configuration defines parameters like the model to use, while the
+        /// client handles the actual API communication.
+        constructor(config: chat-config, client: client, generate-title: bool);
+
+        /// Returns the unique identifier for this chat session.
+        ///
+        /// Can be used to reference or retrieve this specific conversation.
+        session-id: func() -> string;
+
+        /// Returns the title of the chat session, if one has been set.
+        ///
+        /// Titles can help organize and identify different conversations.
+        session-title: func() -> option<string>;
+
+        /// Returns the current configuration for this chat session.
+        ///
+        /// The configuration includes model selection, temperature, and other parameters.
+        config: func() -> chat-config;
+
+        /// Enables streaming mode for this chat session.
+        ///
+        /// When streaming is enabled, responses will be delivered incrementally
+        /// as they are generated, rather than waiting for the complete response.
+        enable-streaming: func();
+
+        /// Disables streaming mode for this chat session.
+        ///
+        /// When streaming is disabled, responses will only be delivered after
+        /// the model has completed the entire generation.
+        disable-streaming: func();
+
+        /// Fork a conversation at a particular message index
+        fork-at: func(idx: u64) -> result<chat-session, plugin-error>;
+
+        /// Sets the response schema in the config
+        set-response-schema: func(schema: option<string>) -> result<bool, plugin-error>;
+
+        /// Returns the complete message history for this conversation.
+        ///
+        /// Includes all messages exchanged between the user and assistant.
+        messages: func() -> list<message>;
+
+        /// Sets the complete message history for this conversation.
+        set-messages: func(new-messages: list<message>) -> result<bool, plugin-error>;
+
+        /// Sends a simple text message to the AI and returns its response.
+        ///
+        /// Convenience method that automatically formats the text as a user message.
+        chat: func(msg: string) -> result<chat-completion, plugin-error>;
+
+        /// Adds a tool to the chat configuration for this session.
+        ///
+        /// Tools enable the AI to perform specific functions or access particular capabilities.
+        add-tool: func(tool-schema: string) -> result<bool, plugin-error>;
+
+        /// Removes a tool from the chat configuration for this session.
+        ///
+        /// Use this to restrict the AI from using a previously available capability.
+        remove-tool: func(tool-name: string) -> result<bool, plugin-error>;
+
+        /// Removes all tools
+        remove-all-tools: func() -> result<bool, plugin-error>;
+
+        /// Adds a message to the conversation history without sending it to the AI.
+        ///
+        /// Useful for updating the context with system messages or past exchanges.
+        add-message: func(msg: message) -> result<bool, plugin-error>;
+
+        /// Sends a formatted message to the AI and returns its response.
+        ///
+        /// Provides full control over message structure, including role and content types.
+        send-message: func(msg: message) -> result<chat-completion, plugin-error>;
+
+        /// Sets the tool choice for the AI to use in the next response.
+        ///
+        /// This allows the AI to select a specific tool from the available options.
+        set-tool-choice: func(tool-choice: option<tool-selection>) -> result<bool, plugin-error>;
+
+        /// Sends the current message history to the AI model and returns its response.
+        ///
+        /// This method is typically used after adding one or more messages with the
+        /// `add-message` function to get a response based on the accumulated conversation
+        /// context without creating a new user message.
+        send: func() -> result<chat-completion, plugin-error>;
+    }
+}

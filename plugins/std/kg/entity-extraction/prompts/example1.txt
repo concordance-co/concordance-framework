@@ -1,0 +1,52 @@
+Entity_types: [person, technology, mission, organization, location]
+    Text:
+They were no longer mere operatives; they had become guardians of a threshold, keepers of a message from a realm beyond stars and stripes. This elevation in their mission could not be shackled by regulations and established protocols—it demanded a new perspective, a new resolve.
+
+Tension threaded through the dialogue of beeps and static as communications with Washington buzzed in the background. The team stood, a portentous air enveloping them. It was clear that the decisions they made in the ensuing hours could redefine humanity's place in the cosmos or condemn them to ignorance and potential peril.
+
+Their connection to the stars solidified, the group moved to address the crystallizing warning, shifting from passive recipients to active participants. Mercer's latter instincts gained precedence— the team's mandate had evolved, no longer solely to observe and report but to interact and prepare. A metamorphosis had begun, and Operation: Dulce hummed with the newfound frequency of their daring, a tone set not by the earthly
+    #############
+    Output:
+    ```json
+    {
+    	"entityExtraction": {
+    		"entities": [
+    			{
+    				"name": "Washington",
+    				"type": "location",
+    				"description": "Washington is a location where communications are being received, indicating its importance in the decision-making process."
+    			},
+    			{
+    				"name": "Operation: Dulce",
+    				"type": "mission",
+    				"description": "Operation: Dulce is described as a mission that has evolved to interact and prepare, indicating a significant shift in objectives and activities."
+    			},
+    			{
+    				"name": "The team",
+    				"type": "organization",
+    				"description": "The team is portrayed as a group of individuals who have transitioned from passive observers to active participants in a mission, showing a dynamic change in their role."
+    			}
+    		],
+    		"relationships": [
+    			{
+    				"source": "The team",
+    				"target": "Washington",
+    				"description": "The team receives communications from Washington, which influences their decision-making process.",
+    				"keywords": "decision-making, external influence",
+    				"strength": 7
+    			},
+    			{
+    				"source": "The team",
+    				"target": "Operation: Dulce",
+    				"description": "The team is directly involved in Operation: Dulce, executing its evolved objectives and activities.",
+    				"keywords": "mission evolution, active participation",
+    				"strength": 9
+    			}
+    		],
+    		"contentKeywords": {
+    			"highLevelKeywords": "mission evolution, decision-making, active participation, cosmic significance"
+    		}
+    	}
+    }
+    ```
+    #############################
